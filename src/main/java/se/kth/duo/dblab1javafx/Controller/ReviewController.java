@@ -1,6 +1,6 @@
 package se.kth.duo.dblab1javafx.Controller;
-import se.kth.duo.dblab1javafx.Model.*;
 
+import se.kth.duo.dblab1javafx.Model.*;
 // import java.sql.SQLException;
 import java.time.LocalDate;
 // import java.util.ArrayList;

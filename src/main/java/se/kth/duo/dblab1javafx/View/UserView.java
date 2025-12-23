@@ -1,13 +1,9 @@
 package se.kth.duo.dblab1javafx.View;
 
+import javafx.event.ActionEvent;
 import se.kth.duo.dblab1javafx.Controller.*;
 import se.kth.duo.dblab1javafx.Model.*;
-
-//import Controller.BookController;
 import se.kth.duo.dblab1javafx.Controller.*;
-//import Controller.UserController;
-//import Model.*;
-
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -17,7 +13,6 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,24 +21,24 @@ import java.util.Optional;
 
 public class UserView {
 
+    // TODO: bör ej ta emot controllers?
     private final BookController bookController;
     private final AuthorController authorController;
     private final ReviewController reviewController;
     private final UserController userController;
-    private final Runnable logoutAction;
+    private final Runnable logoutAction; // todo: justera från runnable
 
+    // TODO: bör hanteras i controller?
     private User loggedInUser = null;
-
-    private Button loginButton;
-    private Button logOutButton;
-
-    private Button inputBookButton;
-    private Button removeBookButton;
-    private Button userRateBookButton;
-    private Button inputReviewButton;
 
     private Button searchButton;
     private Button rateBookButton;
+    private Button inputBookButton;
+    private Button removeBookButton;
+    private Button loginButton;
+    private Button logOutButton;
+    private Button userRateBookButton;
+    private Button inputReviewButton;
 
     public UserView(BookController bookController,
                     AuthorController authorController,
@@ -56,6 +51,7 @@ public class UserView {
         this.userController = userController;
         this.logoutAction = logoutAction;
     }
+
 
     public void showUserProfile(Stage stage) {
         stage.setTitle("User Menu");
@@ -71,10 +67,6 @@ public class UserView {
         inputReviewButton = new Button("Write a Review");
         logOutButton = new Button("Log out");
 
-        // TODO: ta bort följande två alternativ o allt som hör till dem
-        Button inputAuthorButton = new Button("Insert Author");
-        Button inputAuthorToBookButton = new Button("Assign Author to Book");
-
         GridPane grid = new GridPane();
         grid.setPadding(new Insets(15));
         grid.setHgap(10);
@@ -85,19 +77,16 @@ public class UserView {
         grid.add(loginButton, 2, 0);
         grid.add(inputBookButton, 0, 1);
         grid.add(removeBookButton, 1, 1);
-        grid.add(userRateBookButton, 2, 1);
-        grid.add(inputReviewButton, 0, 2);
-        grid.add(logOutButton, 1, 2);
-        grid.add(new Label(""), 2, 2);
-        grid.add(inputAuthorButton, 0, 3);
-        grid.add(inputAuthorToBookButton, 1, 3);
+        grid.add(userRateBookButton, 0, 2);
+        grid.add(inputReviewButton, 1, 2);
+        grid.add(logOutButton, 2, 2);
 
-        setLoggedIn(false);
+        setLoggedIn(false); // todo flytta till controller
 
-        /* Wiring */
-        searchButton.setOnAction(e -> openSearchDialog(stage));
+        /* Wiring */ // todo: ska flyttas till controller så den anropar metod i view
+        searchButton.addEventHandler(ActionEvent.ACTION, e -> openSearchDialog(stage));
 
-        rateBookButton.setOnAction(e -> {
+        rateBookButton.addEventHandler(ActionEvent.ACTION,e -> {
             try {
                 openAnonymousRatingDialog(stage);
             } catch (Exception ex) {
@@ -105,16 +94,16 @@ public class UserView {
             }
         });
 
-        loginButton.setOnAction(e -> openLoginDialog(stage));
+        loginButton.addEventHandler(ActionEvent.ACTION, e -> openLoginDialog(stage));
 
-        logOutButton.setOnAction(e -> {
+        logOutButton.addEventHandler(ActionEvent.ACTION,e -> {
             loggedInUser = null;
             setLoggedIn(false);
             new Alert(Alert.AlertType.INFORMATION, "Logged out").showAndWait();
             if (logoutAction != null) logoutAction.run();
         });
 
-        inputBookButton.setOnAction(e -> {
+        inputBookButton.addEventHandler(ActionEvent.ACTION,e -> {
             try {
                 openInsertBookDialog(stage);
             } catch (Exception ex) {
@@ -122,7 +111,7 @@ public class UserView {
             }
         });
 
-        userRateBookButton.setOnAction(e -> {
+        userRateBookButton.addEventHandler(ActionEvent.ACTION,e -> {
             try {
                 openUserRatingDialog(stage);
             } catch (Exception ex) {
@@ -130,7 +119,7 @@ public class UserView {
             }
         });
 
-        inputReviewButton.setOnAction(e -> {
+        inputReviewButton.addEventHandler(ActionEvent.ACTION,e -> {
             try {
                 openWriteReviewDialog(stage);
             } catch (Exception ex) {
@@ -138,7 +127,7 @@ public class UserView {
             }
         });
 
-        removeBookButton.setOnAction(e -> {
+        removeBookButton.addEventHandler(ActionEvent.ACTION,e -> {
             try {
                 openRemoveBookDialog(stage);
             } catch (Exception ex) {
@@ -146,101 +135,15 @@ public class UserView {
             }
         });
 
-        inputAuthorButton.setOnAction(e -> {
-            try {
-                openInsertAuthorDialog(stage);
-            } catch (Exception ex) {
-                showError("Insert author failed", ex);
-            }
-        });
-
-        inputAuthorToBookButton.setOnAction(e -> {
-            new Alert(Alert.AlertType.INFORMATION, "Assign Author to Book: not used in final UI.").showAndWait();
-        });
-
-        stage.setScene(new Scene(grid, 560, 260));
+        stage.setScene(new Scene(grid, 600, 300));
         stage.show();
     }
 
-    // alternativ av/på beroende på om inloggad eller ej.
-    private void setLoggedIn(boolean loggedIn) {
-        inputBookButton.setDisable(!loggedIn);
-        removeBookButton.setDisable(!loggedIn);
-        userRateBookButton.setDisable(!loggedIn);
-        inputReviewButton.setDisable(!loggedIn);
-        logOutButton.setDisable(!loggedIn);
 
-        loginButton.setDisable(loggedIn);
-
-        // det som alltid tillåtet
-        searchButton.setDisable(false);
-        rateBookButton.setDisable(false); // TODO: inloggad användare ska ej kunna göra (!)
-    }
-
-    // Inloggningsfönstret
-    private void openLoginDialog(Stage owner) {
-        Dialog<String[]> dialog = new Dialog<>();
-        dialog.setTitle("Login");
-        dialog.initOwner(owner);
-        dialog.initModality(Modality.WINDOW_MODAL);
-
-        ButtonType okBtn = new ButtonType("Login", ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(okBtn, ButtonType.CANCEL);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(10));
-
-        TextField username = new TextField();
-        PasswordField password = new PasswordField();
-
-        grid.addRow(0, new Label("Username:"), username);
-        grid.addRow(1, new Label("Password:"), password);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(btn -> {
-            if (btn != okBtn) return null;
-            return new String[]{username.getText().trim(), password.getText()};
-        });
-
-        Optional<String[]> res = dialog.showAndWait();
-        if (res.isEmpty()) return;
-
-        String[] creds = res.get();
-        if (creds[0].isEmpty()) {
-            new Alert(Alert.AlertType.WARNING, "Username required").showAndWait();
-            return;
-        }
-
-        // Inloggning i bakgrunden av UI
-        Task<User> task = new Task<>() {
-            @Override
-            protected User call() throws Exception {
-                return userController.login(creds[0], creds[1]);
-            }
-        };
-
-        task.setOnSucceeded(e -> {
-            User u = task.getValue();
-            if (u == null) {
-                new Alert(Alert.AlertType.ERROR, "Wrong username or password").showAndWait();
-                return;
-            }
-            loggedInUser = u;
-            setLoggedIn(true);
-            new Alert(Alert.AlertType.INFORMATION, "Logged in as: " + loggedInUser.getUsername()).showAndWait();
-        });
-
-        task.setOnFailed(e -> showError("Login failed", task.getException()));
-
-        new Thread(task, "login-task").start();
-    }
-
-    // Vid search (kan klicka på bok-rad i UI för få info om boks författare)
+    // Vid search, visar table, sedan kan klicka på bok-rad i UI för få info om boks författare i Alert-meddelande
     private void openSearchDialog(Stage owner) {
         Dialog<SearchRequest> dialog = new Dialog<>();
+        dialog.setResizable(true);
         dialog.setTitle("Search");
         dialog.initOwner(owner);
 
@@ -255,11 +158,11 @@ public class UserView {
         TextField first = new TextField();
         TextField last = new TextField();
 
-        VBox box = new VBox(10);
+        VBox box = new VBox(5);
         box.setPadding(new Insets(10));
         box.getChildren().addAll(new Label("Search type:"), type, new Label("Search input:"), input);
 
-        type.setOnAction(e -> {
+        type.addEventHandler(ActionEvent.ACTION,e -> {
             box.getChildren().clear();
             box.getChildren().addAll(new Label("Search type:"), type);
             if ("Author".equals(type.getValue())) {
@@ -269,6 +172,7 @@ public class UserView {
             }
         });
 
+        // TODO: justera så när väljer author syns i hela fönster
         dialog.getDialogPane().setContent(box);
 
         dialog.setResultConverter(btn -> {
@@ -283,7 +187,7 @@ public class UserView {
         if (res.isEmpty()) return;
 
         SearchRequest req = res.get();
-        Task<List<Book>> task = new Task<>() {
+        Task<List<Book>> task = new Task<>() { // TODO: justera så trådning i controlelr o ej Task
             @Override
             protected List<Book> call() throws Exception {
                 switch (req.type) {
@@ -310,6 +214,7 @@ public class UserView {
         new Thread(task, "search-task").start();
     }
 
+    // delmoment av search-delen
     private void showBooksTable(Stage owner, List<Book> books) {
         Stage stage = new Stage();
         stage.initOwner(owner);
@@ -332,8 +237,8 @@ public class UserView {
 
         table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 
-        // Visar författare i Alert-meddelande
-        table.getSelectionModel().selectedItemProperty().addListener((obs, oldBook, newBook) -> {
+        // Visar författare i Alert-meddelande // todo: flytta till controller
+        table.getSelectionModel().selectedItemProperty().addListener((e, oldBook, newBook) -> {
             if (newBook != null) {
                 showAuthorDetails(newBook);
             }
@@ -345,6 +250,7 @@ public class UserView {
         stage.show();
     }
 
+    // delmoment för search-delen
     private void showAuthorDetails(Book book) {
         StringBuilder msg = new StringBuilder("Authors:\n\n");
         for (Author a : book.getAuthors()) {
@@ -361,7 +267,8 @@ public class UserView {
         alert.showAndWait();
     }
 
-    // vid inläggning av bok
+
+    /* följande tre metoder kopplat till inlägg av bok */
     private void openInsertBookDialog(Stage owner) throws DatabaseException {
         if (loggedInUser == null) {
             new Alert(Alert.AlertType.WARNING, "You must be logged in to insert books.").showAndWait();
@@ -381,25 +288,25 @@ public class UserView {
         TextField isbn = new TextField();
         TextField authors = new TextField();
         TextField genres = new TextField();
-        authors.setPromptText("Karl Svensson; Hans Blomgren");
-        genres.setPromptText("Adventure; Children");
+        authors.setPromptText("Karl Svensson, Hans Blomgren");
+        genres.setPromptText("Fantasy, Children");
 
         g.addRow(0, new Label("Title:"), title);
         g.addRow(1, new Label("Pages:"), pages);
         g.addRow(2, new Label("ISBN:"), isbn);
-        g.addRow(3, new Label("Authors (; separated):"), authors);
-        g.addRow(4, new Label("Genres (; separated):"), genres);
+        g.addRow(3, new Label("Authors:"), authors);
+        g.addRow(4, new Label("Genres:"), genres);
         g.add(new Label("(Only existing authors/genres allowed)"), 0, 5, 2, 1);
 
         dialog.getDialogPane().setContent(g);
 
-        Optional<ButtonType> res = dialog.showAndWait();
-        if (res.isEmpty() || res.get() != ButtonType.OK) return;
+        Optional<ButtonType> button = dialog.showAndWait();
+        if (button.isEmpty() || button.get() != ButtonType.OK) return;
 
         List<Author> authorList = parseAuthors(authors.getText());
         List<Genre> genreList = parseGenres(genres.getText());
 
-        bookController.createBook(
+        bookController.createBook( // todo: flytta så sker i controller
                 title.getText().trim(),
                 authorList,
                 genreList,
@@ -410,11 +317,12 @@ public class UserView {
         new Alert(Alert.AlertType.INFORMATION, "Book inserted!").showAndWait();
     }
 
+    // delmetod av insert to Books
     private List<Author> parseAuthors(String raw) throws DatabaseException {
-        List<Author> out = new ArrayList<>();
+        List<Author> out = new ArrayList<>(); // todo: justera följande
         if (raw == null || raw.trim().isEmpty()) return out;
 
-        for (String token : raw.split(";")) {
+        for (String token : raw.split(",")) {
             String full = token.trim();
             if (full.isEmpty()) continue;
 
@@ -433,11 +341,12 @@ public class UserView {
         return out;
     }
 
+    // delmetod av insert to Books
     private List<Genre> parseGenres(String raw) {
         List<Genre> out = new ArrayList<>();
         if (raw == null || raw.trim().isEmpty()) return out;
 
-        for (String token : raw.split(";")) {
+        for (String token : raw.split(",")) {
             String name = token.trim();
             if (name.isEmpty()) continue;
             out.add(new Genre(0, name));
@@ -445,82 +354,8 @@ public class UserView {
         return out;
     }
 
-    // inläggning av författare
-    private void openInsertAuthorDialog(Stage owner) throws DatabaseException {
-        if (loggedInUser == null) {
-            new Alert(Alert.AlertType.WARNING, "You must be logged in to insert authors.").showAndWait();
-            return;
-        }
 
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Insert Author");
-        dialog.initOwner(owner);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        GridPane g = new GridPane();
-        g.setHgap(10); g.setVgap(10); g.setPadding(new Insets(10));
-
-        TextField first = new TextField();
-        TextField last = new TextField();
-        TextField birth = new TextField();
-        TextField death = new TextField();
-        birth.setPromptText("yyyy-MM-dd");
-        death.setPromptText("yyyy-MM-dd (optional)");
-
-        g.addRow(0, new Label("First Name:"), first);
-        g.addRow(1, new Label("Last Name:"), last);
-        g.addRow(2, new Label("Birth Date:"), birth);
-        g.addRow(3, new Label("Death Date:"), death);
-
-        dialog.getDialogPane().setContent(g);
-
-        Optional<ButtonType> res = dialog.showAndWait();
-        if (res.isEmpty() || res.get() != ButtonType.OK) return;
-
-        LocalDate b = LocalDate.parse(birth.getText().trim());
-        LocalDate d = death.getText().trim().isEmpty() ? null : LocalDate.parse(death.getText().trim());
-
-        authorController.createAuthor(first.getText().trim(), last.getText().trim(), b, d);
-        new Alert(Alert.AlertType.INFORMATION, "Author inserted!").showAndWait();
-    }
-
-    // Skriva review
-    private void openWriteReviewDialog(Stage owner) throws DatabaseException {
-        if (loggedInUser == null) {
-            new Alert(Alert.AlertType.WARNING, "You must be logged in to write a review.").showAndWait();
-            return;
-        }
-
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Write a review");
-        dialog.initOwner(owner);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        GridPane g = new GridPane();
-        g.setHgap(10); g.setVgap(10); g.setPadding(new Insets(10));
-
-        TextField isbn = new TextField();
-        TextField text = new TextField();
-
-        g.addRow(0, new Label("Book ISBN:"), isbn);
-        g.addRow(1, new Label("Review text:"), text);
-
-        dialog.getDialogPane().setContent(g);
-
-        Optional<ButtonType> res = dialog.showAndWait();
-        if (res.isEmpty() || res.get() != ButtonType.OK) return;
-
-        Book book = new Book();
-        book.setISBN(isbn.getText().trim());
-
-        User user = new User();
-        user.setUsername(loggedInUser.getUsername());
-
-        reviewController.createReview(book, user, text.getText().trim());
-        new Alert(Alert.AlertType.INFORMATION, "Review saved!").showAndWait();
-    }
-
-    // Anonym rating av bok
+    /* Anonym rating av bok */
     private void openAnonymousRatingDialog(Stage owner) throws DatabaseException {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Rate book");
@@ -547,7 +382,8 @@ public class UserView {
         new Alert(Alert.AlertType.INFORMATION, "Rating saved!").showAndWait();
     }
 
-    // user rating av bok
+
+    /* user rating av bok */
     private void openUserRatingDialog(Stage owner) throws DatabaseException {
         if (loggedInUser == null) {
             new Alert(Alert.AlertType.WARNING, "You must be logged in to rate.").showAndWait();
@@ -579,7 +415,45 @@ public class UserView {
         new Alert(Alert.AlertType.INFORMATION, "Rating saved!").showAndWait();
     }
 
-    // ta bort bok
+
+    /* Skriva review */
+    private void openWriteReviewDialog(Stage owner) throws DatabaseException {
+        if (loggedInUser == null) {
+            new Alert(Alert.AlertType.WARNING, "You must be logged in to write a review.").showAndWait();
+            return;
+        }
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Write a review");
+        dialog.initOwner(owner);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        GridPane g = new GridPane();
+        g.setHgap(10); g.setVgap(10); g.setPadding(new Insets(10));
+
+        TextField isbn = new TextField();
+        TextField text = new TextField();
+
+        g.addRow(0, new Label("Book ISBN:"), isbn);
+        g.addRow(1, new Label("Review text:"), text);
+
+        dialog.getDialogPane().setContent(g);
+
+        Optional<ButtonType> res = dialog.showAndWait();
+        if (res.isEmpty() || res.get() != ButtonType.OK) return;
+
+        Book book = new Book();
+        book.setISBN(isbn.getText().trim());
+
+        User user = new User(); // todo: flytta till controller
+        user.setUsername(loggedInUser.getUsername());
+
+        reviewController.createReview(book, user, text.getText().trim());
+        new Alert(Alert.AlertType.INFORMATION, "Review saved!").showAndWait();
+    }
+
+
+    /* ta bort bok */
     private void openRemoveBookDialog(Stage owner) throws DatabaseException {
         if (loggedInUser == null) {
             new Alert(Alert.AlertType.WARNING, "You must be logged in to remove books.").showAndWait();
@@ -610,6 +484,81 @@ public class UserView {
 
         bookController.removeBook(isbn);
         new Alert(Alert.AlertType.INFORMATION, "Book deleted.").showAndWait();
+    }
+
+
+    /* Inloggningsfönstret */
+    private void openLoginDialog(Stage owner) {
+        Dialog<String[]> dialog = new Dialog<>();
+        dialog.setTitle("Login");
+        dialog.initOwner(owner);
+        dialog.initModality(Modality.WINDOW_MODAL);
+
+        ButtonType login = new ButtonType("Login", ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(login, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(10));
+
+        TextField username = new TextField();
+        PasswordField password = new PasswordField();
+
+        grid.addRow(0, new Label("Username:"), username);
+        grid.addRow(1, new Label("Password:"), password);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(pressedButton -> {
+            if (pressedButton != login) return null;
+            return new String[]{username.getText(), password.getText()};
+        });
+
+        Optional<String[]> res = dialog.showAndWait();
+        if (res.isEmpty()) return;
+
+        String[] inputLogin = res.get();
+        if (inputLogin[0].isEmpty()) {
+            new Alert(Alert.AlertType.WARNING, "Username required").showAndWait();
+            return;
+        }
+
+        // Inloggning i bakgrunden av UI // TODO: ändra till rekomenderad trådning och i controller
+        Task<User> task = new Task<>() {
+            @Override
+            protected User call() throws Exception {
+                return userController.login(inputLogin[0], inputLogin[1]);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            User u = task.getValue();
+            if (u == null) {
+                new Alert(Alert.AlertType.ERROR, "Wrong username or password").showAndWait();
+                return;
+            }
+            loggedInUser = u;
+            setLoggedIn(true);
+            new Alert(Alert.AlertType.INFORMATION, "Logged in as: " + loggedInUser.getUsername()).showAndWait();
+        });
+
+        task.setOnFailed(e -> showError("Login failed", task.getException()));
+
+        new Thread(task, "login-task").start();
+    }
+
+    // alternativ av/på beroende på om inloggad eller ej.
+    private void setLoggedIn(boolean loggedIn) {
+        searchButton.setDisable(false); // alla kan alltid söka
+        rateBookButton.setDisable(loggedIn); // endast anonyma (icke-inloggade kan)
+        loginButton.setDisable(loggedIn);
+        // endast inloggade kan gära följande
+        userRateBookButton.setDisable(!loggedIn);
+        inputBookButton.setDisable(!loggedIn);
+        removeBookButton.setDisable(!loggedIn);
+        inputReviewButton.setDisable(!loggedIn);
+        logOutButton.setDisable(!loggedIn);
     }
 
 

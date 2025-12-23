@@ -1,7 +1,7 @@
 package se.kth.duo.dblab1javafx.Model;
 
-import se.kth.duo.dblab1javafx.View.*;
-import se.kth.duo.dblab1javafx.Controller.*;
+// import se.kth.duo.dblab1javafx.View.*;
+// import se.kth.duo.dblab1javafx.Controller.*;
 
 import java.sql.*;
 import java.time.LocalDate;

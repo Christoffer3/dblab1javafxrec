@@ -18,8 +18,7 @@ public class Controller {
     private final UserController userController;
     private final UserView userView;
 
-
-    public Controller(Connection con) { // huvudsakliga modellobjektet
+    public Controller(Connection con, Stage primaryStage) { // huvudsakliga modellobjektet
         this.con = con;
         this.queryLogic = new QueryLogic(con); // huvudsakliga modellobjektet
         this.bookController = new BookController(queryLogic);
@@ -34,6 +33,9 @@ public class Controller {
                 userController,
                 this::shutdown // TODO: justera så lämpligare
         );
+
+        primaryStage.setOnCloseRequest(e -> this.shutdown()); // stänger connection vid avlslut av app.
+        startUI(primaryStage); // startar View
     }
 
     public void startUI(Stage stage) { // startar userView
