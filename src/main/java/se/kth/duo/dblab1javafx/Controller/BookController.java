@@ -1,17 +1,15 @@
 package se.kth.duo.dblab1javafx.Controller;
 
+import javafx.application.Platform;
 import se.kth.duo.dblab1javafx.Model.*;
-
-// import java.sql.SQLException;
-// import java.util.ArrayList;
 import java.util.List;
-// import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 public class BookController {
 
     private final QL_Interface queryLogic;
 
-    public BookController(QL_Interface queryLogic) { // tar emot huv. modellobjektat skapat i huv. Controllern
+    public BookController(QL_Interface queryLogic) {
         this.queryLogic = queryLogic;
     }
 
@@ -26,6 +24,7 @@ public class BookController {
     public List<Book> searchBookByTitle(String title) throws DatabaseException {
         return queryLogic.searchBookByTitle(title);
     }
+
     public List<Book> searchBookByAuthor(String firstName, String lastName) throws DatabaseException {
         return queryLogic.searchBookByAuthor(firstName, lastName);
     }
@@ -46,7 +45,6 @@ public class BookController {
         queryLogic.deleteBookByISBN(isbn);
     }
 
-    // TODO: inloggad användare kan fortfarande göra anonyma (inloggade users ska ej kunna) (!)
     public void rateBookAnonymous(String isbn, int rating) throws DatabaseException {
         queryLogic.insertToRatings(isbn, rating);
     }
@@ -55,28 +53,30 @@ public class BookController {
         queryLogic.insertToUserRatings(isbn, username, rating);
     }
 
-    // Kan ta bort det nedan?
-    public void assignAuthorToBook(String ISBN, int authorID) throws DatabaseException {
-        queryLogic.bookAuthors(ISBN, authorID);
+    public void searchAsync(String type,
+                            String input,
+                            String first,
+                            String last,
+                            Consumer<List<Book>> onSuccess,
+                            Consumer<Throwable> onError) {
+
+        new Thread(() -> {
+            try {
+                List<Book> books;
+                switch (type) {
+                    case "Title":  books = searchBookByTitle(input.trim()); break;
+                    case "ISBN":   books = searchBookByISBN(input.trim()); break;
+                    case "Genre":  books = searchBookByGenre(input.trim()); break;
+                    case "Rating": books = searchBookByRating(Integer.parseInt(input.trim())); break;
+                    case "Author": books = searchBookByAuthor(first.trim(), last.trim()); break;
+                    default:       books = List.of();
+                }
+                Platform.runLater(() -> onSuccess.accept(books));
+            } catch (Throwable ex) {
+                Platform.runLater(() -> onError.accept(ex));
+            }
+        }, "search-thread").start();
+
     }
 
-    public String getTitle(Book book) {
-        return book.getTitle();
-    }
-
-    public List<Genre> getGenre(Book book) {
-        return book.getGenres();
-    }
-
-    public int getPages(Book book) {
-        return book.getPages();
-    }
-
-    public String getISBN(Book book) {
-        return book.getISBN();
-    }
-
-    public List<Author> getAuthors(Book book) {
-        return book.getAuthors();
-    }
 }

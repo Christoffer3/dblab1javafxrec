@@ -1,16 +1,13 @@
 package se.kth.duo.dblab1javafx.Controller;
 
 import se.kth.duo.dblab1javafx.Model.*;
-// import java.sql.SQLException;
 import java.time.LocalDate;
-// import java.util.ArrayList;
-// import java.util.List;
 
 public class ReviewController {
 
-    private QL_Interface queryLogic;
+    private final QL_Interface queryLogic;
 
-    public ReviewController(QL_Interface queryLogic) { // tar emot huv. modellobjektat skapat i huv. Controllern
+    public ReviewController(QL_Interface queryLogic) {
         this.queryLogic = queryLogic;
     }
 

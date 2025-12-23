@@ -1,12 +1,10 @@
 package se.kth.duo.dblab1javafx.Controller;
 
-import se.kth.duo.dblab1javafx.Model.*;
-// import se.kth.duo.dblab1javafx.Model.QueryLogic;
-import se.kth.duo.dblab1javafx.View.UserView;
 import javafx.stage.Stage;
+import se.kth.duo.dblab1javafx.Model.*;
+import se.kth.duo.dblab1javafx.View.UserView;
 import java.sql.Connection;
 import java.sql.SQLException;
-
 
 public class Controller {
 
@@ -18,9 +16,10 @@ public class Controller {
     private final UserController userController;
     private final UserView userView;
 
-    public Controller(Connection con, Stage primaryStage) { // huvudsakliga modellobjektet
+    public Controller(Connection con, Stage primaryStage) {
         this.con = con;
-        this.queryLogic = new QueryLogic(con); // huvudsakliga modellobjektet
+        this.queryLogic = new QueryLogic(con);
+
         this.bookController = new BookController(queryLogic);
         this.authorController = new AuthorController(queryLogic);
         this.reviewController = new ReviewController(queryLogic);
@@ -30,21 +29,19 @@ public class Controller {
                 bookController,
                 authorController,
                 reviewController,
-                userController,
-                this::shutdown // TODO: justera så lämpligare
+                userController
         );
 
         primaryStage.setOnCloseRequest(e -> this.shutdown()); // stänger connection vid avlslut av app.
         startUI(primaryStage); // startar View
     }
 
-    public void startUI(Stage stage) { // startar userView
+    public void startUI(Stage stage) {
         userView.showUserProfile(stage);
     }
 
-    public void shutdown() { // stänger connection mot databasen
+    public void shutdown() { // TODO: hanteras det korrekt enligt uppg.beskrivning?
         System.out.println("Shutting down.");
-
         try {
             if (con != null && !con.isClosed()) {
                 con.close();
@@ -55,5 +52,4 @@ public class Controller {
             e.printStackTrace();
         }
     }
-
 }
