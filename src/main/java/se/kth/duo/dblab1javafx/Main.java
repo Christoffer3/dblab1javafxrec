@@ -17,7 +17,6 @@ public class Main extends Application {
         try {
             JDBC jdbc = new JDBC("dblab1", "dblab1client", "dblab1"); // hårdkodad uppkoppling, denna rättighets-begränsade MySQL-inloggningen är i skapad i MySQL Workbench.
             con = jdbc.connectToDB();
-
             controller = new Controller(con, primaryStage);
 
         } catch (Exception e) {
