@@ -252,17 +252,18 @@ public class UserView {
             List<Author> authorList = parseAuthors(authors.getText());
             List<Genre> genreList = parseGenres(genres.getText());
 
-            bookController.createBook(
-                    title.getText().trim(),
-                    authorList,
-                    genreList,
-                    Integer.parseInt(pages.getText().trim()),
-                    isbn.getText().trim()
+            bookController.createBookAsync(title.getText().trim(), authorList, genreList, Integer.parseInt(pages.getText().trim()), isbn.getText().trim(),
+                    book -> {
+                        new Alert(Alert.AlertType.INFORMATION, "Book inserted!").showAndWait();
+                    },
+                    ex -> {
+                        showError("Insert book failed", ex);
+                    }
             );
-
-            new Alert(Alert.AlertType.INFORMATION, "Book inserted!").showAndWait();
+        } catch (NumberFormatException nfe) {
+            showError("Invalid input", new Exception("Pages must be a number"));
         } catch (Exception ex) {
-            showError("Insert book failed", ex);
+            showError("Request failed", ex);
         }
     }
 
@@ -407,13 +408,18 @@ public class UserView {
         try {
             Book book = new Book();
             book.setISBN(isbn.getText().trim());
-
             User user = userController.getLoggedInUser();
-            reviewController.createReview(book, user, text.getText().trim());
-
-            new Alert(Alert.AlertType.INFORMATION, "Review saved!").showAndWait();
+            reviewController.createReviewAsync(book, user, text.getText().trim(),
+                    review -> {
+                        new Alert(Alert.AlertType.INFORMATION, "Review saved!").showAndWait();
+                        text.clear();
+                    },
+                    ex -> {
+                        showError("Write a review failed", ex);
+                    }
+            );
         } catch (Exception ex) {
-            showError("Write an review failed", ex);
+            showError("Request failed", ex);
         }
     }
 

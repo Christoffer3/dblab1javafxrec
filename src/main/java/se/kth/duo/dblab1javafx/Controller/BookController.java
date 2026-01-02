@@ -21,6 +21,17 @@ public class BookController {
         return book;
     }
 
+    public void createBookAsync(String title, List<Author> authors, List<Genre> genres, int pages, String ISBN, Consumer<Book> onSuccess, Consumer<Throwable> onError) {
+        new Thread(() -> {
+            try {
+                Book book = createBook(title, authors, genres, pages, ISBN);
+                Platform.runLater(() -> onSuccess.accept(book));
+            } catch (Throwable ex) {
+                Platform.runLater(() -> onError.accept(ex));
+            }
+        }, "book-thread").start();
+    }
+
     public List<Book> searchBookByTitle(String title) throws DatabaseException {
         return queryLogic.searchBookByTitle(title);
     }

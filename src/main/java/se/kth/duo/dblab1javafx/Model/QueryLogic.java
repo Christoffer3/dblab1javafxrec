@@ -302,41 +302,80 @@ public class QueryLogic implements QL_Interface {
     @Override
     public void insertToRatings(String ISBN, int rating) throws DatabaseException {
         String sql = "INSERT INTO T_Rating (book_ISBN, rating) VALUES (?, ?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, ISBN);
-            ps.setInt(2, rating);
-            ps.executeUpdate();
+        try {
+            con.setAutoCommit(false);
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, ISBN);
+                ps.setInt(2, rating);
+                ps.executeUpdate();
+                con.commit();
+            } catch (SQLException e) {
+                con.rollback();
+                throw e;
+            }
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when inserting rating", e);
+            throw new DatabaseException("Transaction failed", e);
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     @Override
     public void insertToUserRatings(String ISBN, String username, int userRating) throws DatabaseException {
         String sql = "INSERT INTO T_User_Rating (book_ISBN, username, rating) VALUES (?, ?, ?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, ISBN);
-            ps.setString(2, username);
-            ps.setInt(3, userRating);
-            ps.executeUpdate();
-        } catch (SQLIntegrityConstraintViolationException e) {
-            throw new DatabaseException("User have already rated this book.", e);
+        try {
+            con.setAutoCommit(false);
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, ISBN);
+                ps.setString(2, username);
+                ps.setInt(3, userRating);
+                ps.executeUpdate();
+                con.commit();
+            } catch (SQLException e) {
+                con.rollback();
+                if (e instanceof SQLIntegrityConstraintViolationException) {
+                    throw new DatabaseException("User have already rated this book.", e);
+                }
+                throw e;
+            }
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when inserting user rating", e);
+            throw new DatabaseException("Transaction failed: " + e.getMessage(), e);
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     @Override
     public void insertToReviews(Review review) throws DatabaseException {
-        String sql = "INSERT INTO T_Review (book_ISBN, username, reviewText, reviewDate) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, review.getBook().getISBN());
-            ps.setString(2, review.getUser().getUsername());
-            ps.setString(3, review.getReviewText());
-            ps.setDate(4, java.sql.Date.valueOf(review.getReviewDate()));
-            ps.executeUpdate();
+        String sql = "INSERT INTO T_Review (book_ISBN, username, reviewText) VALUES (?, ?, ?)";
+        try {
+            con.setAutoCommit(false);
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, review.getBook().getISBN());
+                ps.setString(2, review.getUser().getUsername());
+                ps.setString(3, review.getReviewText());
+                ps.executeUpdate();
+                con.commit();
+            } catch (SQLException e) {
+                con.rollback();
+                throw e;
+            }
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when inserting review", e);
+            throw new DatabaseException("Transaction failed: " + e.getMessage(), e);
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -346,15 +385,30 @@ public class QueryLogic implements QL_Interface {
     public void deleteBookByISBN(String ISBN) throws DatabaseException {
         String sql = "DELETE FROM T_Book WHERE ISBN = ?";
 
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, ISBN);
-            int rows = ps.executeUpdate();
+        try {
+            con.setAutoCommit(false);
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, ISBN);
+                int rows = ps.executeUpdate();
 
-            if (rows == 0) {
-                throw new DatabaseException("No book found with ISBN: " + ISBN);
+                if (rows == 0) {
+                    con.rollback();
+                    throw new DatabaseException("No book found with ISBN: " + ISBN);
+                }
+
+                con.commit();
+            } catch (SQLException e) {
+                con.rollback();
+                throw e;
             }
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when deleting book", e);
+            throw new DatabaseException("Transaction failed: " + e.getMessage(), e);
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
