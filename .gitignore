@@ -37,9 +37,9 @@ build/
 
 ### Mac OS ###
 .DS_Store
-/src/
-/src/main/java/
-/src/main/java/se/kth/duo/dblab1javafx/
+#/src/
+#/src/main/java/
+#/src/main/java/se/kth/duo/dblab1javafx/
 # Maven
 target/
 
