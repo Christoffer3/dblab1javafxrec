@@ -10,7 +10,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import se.kth.duo.dblab1javafx.Controller.*;
-import se.kth.duo.dblab1javafx.Model.*; // bör det verkligen importeras?
+import se.kth.duo.dblab1javafx.Model.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

@@ -40,7 +40,7 @@ public class Controller {
         userView.showUserProfile(stage);
     }
 
-    public void shutdown() { // TODO: hanteras det korrekt enligt uppg.beskrivning?
+    public void shutdown() { // TODO: hanteras det korrekt enligt uppg.beskrivning? saknar finally efter sista exceptionen?
         System.out.println("Shutting down.");
         try {
             if (con != null && !con.isClosed()) {
