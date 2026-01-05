@@ -1,5 +1,5 @@
 package se.kth.duo.dblab1javafx.View;
-
+// hej
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
