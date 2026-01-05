@@ -27,5 +27,5 @@ public class JDBC {
         System.out.println("Connected as " + user);
 
         return con;
-    }
+    } //hej
 }
