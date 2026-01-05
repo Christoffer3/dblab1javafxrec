@@ -7,4 +7,6 @@ module se.kth.duo.dblab1javafx {
 
     opens se.kth.duo.dblab1javafx to javafx.base;
     exports se.kth.duo.dblab1javafx;
+    exports se.kth.duo.dblab1javafx.Model;
+    opens se.kth.duo.dblab1javafx.Model to javafx.base;
 }
