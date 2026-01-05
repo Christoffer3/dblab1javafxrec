@@ -334,10 +334,19 @@ public class UserView {
         if (res.isEmpty() || res.get() != ButtonType.OK) return;
 
         try {
-            bookController.rateBookAnonymous(isbn.getText().trim(), rating.getValue());
-            new Alert(Alert.AlertType.INFORMATION, "Rating saved!").showAndWait();
+            String isbnStr = isbn.getText().trim();
+            int ratingVal = rating.getValue();
+
+            bookController.rateBookAnonymousAsync(isbnStr, ratingVal,
+                    () -> {
+                        new Alert(Alert.AlertType.INFORMATION, "Rating saved!").showAndWait();
+                    },
+                    ex -> {
+                        showError("Rating of book failed", ex);
+                    }
+            );
         } catch (Exception ex) {
-            showError("Rating off book failed", ex);
+            showError("Request failed", ex);
         }
     }
 
@@ -372,10 +381,19 @@ public class UserView {
 
         try {
             String username = userController.getLoggedInUser().getUsername();
-            bookController.userRateBook(isbn.getText().trim(), username, rating.getValue());
-            new Alert(Alert.AlertType.INFORMATION, "Rating saved!").showAndWait();
+            String isbnStr = isbn.getText().trim();
+            int ratingVal = rating.getValue();
+
+            bookController.userRateBookAsync(isbnStr, username, ratingVal,
+                    () -> {
+                        new Alert(Alert.AlertType.INFORMATION, "Rating saved!").showAndWait();
+                    },
+                    ex -> {
+                        showError("User rating failed", ex);
+                    }
+            );
         } catch (Exception ex) {
-            showError("User rating failed", ex);
+            showError("Request failed", ex);
         }
     }
 
@@ -453,10 +471,18 @@ public class UserView {
         if (c.isEmpty() || c.get() != ButtonType.YES) return;
 
         try {
-            bookController.removeBook(isbn);
-            new Alert(Alert.AlertType.INFORMATION, "Book deleted.").showAndWait();
+            String isbnStr = isbn.trim();
+
+            bookController.removeBookAsync(isbnStr,
+                    () -> {
+                        new Alert(Alert.AlertType.INFORMATION, "Book deleted.").showAndWait();
+                    },
+                    ex -> {
+                        showError("Remove book failed", ex);
+                    }
+            );
         } catch (Exception ex) {
-            showError("Remove book failed", ex);
+            showError("Request failed", ex);
         }
     }
 
@@ -497,9 +523,7 @@ public class UserView {
             return;
         }
 
-        userController.loginAsync(
-                inputLogin[0],
-                inputLogin[1],
+        userController.loginAsync(inputLogin[0], inputLogin[1],
                 user -> {
                     if (user == null) {
                         new Alert(Alert.AlertType.ERROR, "Wrong username or password").showAndWait();

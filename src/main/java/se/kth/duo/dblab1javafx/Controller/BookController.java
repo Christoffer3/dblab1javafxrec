@@ -64,6 +64,39 @@ public class BookController {
         queryLogic.insertToUserRatings(isbn, username, rating);
     }
 
+    public void removeBookAsync(String isbn, Runnable onSuccess, Consumer<Throwable> onError) {
+        new Thread(() -> {
+            try {
+                queryLogic.deleteBookByISBN(isbn);
+                Platform.runLater(onSuccess);
+            } catch (Throwable ex) {
+                Platform.runLater(() -> onError.accept(ex));
+            }
+        }, "db-remove-thread").start();
+    }
+
+    public void rateBookAnonymousAsync(String isbn, int rating, Runnable onSuccess, Consumer<Throwable> onError) {
+        new Thread(() -> {
+            try {
+                queryLogic.insertToRatings(isbn, rating);
+                Platform.runLater(onSuccess);
+            } catch (Throwable ex) {
+                Platform.runLater(() -> onError.accept(ex));
+            }
+        }, "db-rate-anon-thread").start();
+    }
+
+    public void userRateBookAsync(String isbn, String username, int rating, Runnable onSuccess, Consumer<Throwable> onError) {
+        new Thread(() -> {
+            try {
+                queryLogic.insertToUserRatings(isbn, username, rating);
+                Platform.runLater(onSuccess);
+            } catch (Throwable ex) {
+                Platform.runLater(() -> onError.accept(ex));
+            }
+        }, "db-rate-user-thread").start();
+    }
+
     public void searchAsync(String type,
                             String input,
                             String first,
