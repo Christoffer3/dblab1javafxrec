@@ -19,13 +19,13 @@ public class ReviewController {
         return r;
     }
 
-    public void createReviewAsync(Book book, User user, String text, Consumer<Review> onSuccess, Consumer<Throwable> onError) {
+    public void createReviewAsync(Book book, User user, String text, Consumer<Review> onSuccess, Consumer<Exception> onError) {
         new Thread(() -> {
             try {
                 Review review = createReview(book, user, text);
 
                 Platform.runLater(() -> onSuccess.accept(review));
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
         }, "review-thread").start();

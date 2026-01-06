@@ -1,5 +1,5 @@
 package se.kth.duo.dblab1javafx.View;
-// hej
+
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -14,6 +14,7 @@ import se.kth.duo.dblab1javafx.Model.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 
 public class UserView {
 
@@ -54,8 +55,8 @@ public class UserView {
         logOutButton = new Button("Log out");
 
         GridPane grid = new GridPane();
-        grid.setPadding(new Insets(15));
-        grid.setHgap(10);
+        grid.setPadding(new Insets(20));
+        grid.setHgap(15);
         grid.setVgap(10);
 
         grid.add(searchButton, 0, 0);
@@ -67,7 +68,7 @@ public class UserView {
         grid.add(inputReviewButton, 1, 2);
         grid.add(logOutButton, 2, 2);
 
-        availableButtons(); // för vilke knappar kan välja i session
+        availableButtons(); // för vilke knappar kan välja i session (beroende om inloggad elelr ej)
 
         /* Wiring */
         searchButton.addEventHandler(ActionEvent.ACTION, e -> openSearchDialog(stage));
@@ -80,11 +81,11 @@ public class UserView {
 
         logOutButton.addEventHandler(ActionEvent.ACTION, e -> {
             userController.logout();
-            availableButtons(); // gör inloggade alternativ ej tillgängliga längre
+            availableButtons(); // gör inloggade knapp-alternativen ej tillgängliga längre
             new Alert(Alert.AlertType.INFORMATION, "Logged out").showAndWait();
         });
 
-        stage.setScene(new Scene(grid, 600, 300));
+        stage.setScene(new Scene(grid, 300, 150));
         stage.show();
     }
 
@@ -92,7 +93,7 @@ public class UserView {
     private void availableButtons() {
         boolean loggedIn = userController.isLoggedIn();
         searchButton.setDisable(false); // alla kan söka
-        rateBookButton.setDisable(loggedIn); // endast anonym får anonym rating
+        rateBookButton.setDisable(loggedIn); // endast anonym får anonym-rata
         loginButton.setDisable(loggedIn);
         // nedan endast inloggade tillåtna göra
         userRateBookButton.setDisable(!loggedIn);
@@ -121,13 +122,14 @@ public class UserView {
         TextField last = new TextField();
 
         VBox box = new VBox(5);
+        box.setMinHeight(160);
         box.setPadding(new Insets(10));
         box.getChildren().addAll(new Label("Search via:"), type, new Label("input:"), input);
 
         type.addEventHandler(ActionEvent.ACTION, e -> {
             box.getChildren().clear();
             box.getChildren().addAll(new Label("Search via:"), type);
-            if ("Author".equals(type.getValue())) { // TODO: justera så när väljer author syns i hela fönster
+            if ("Author".equals(type.getValue())) {
                 box.getChildren().addAll(new Label("First name:"), first, new Label("Last name:"), last);
             } else {
                 box.getChildren().addAll(new Label("Search via:"), input);
@@ -150,20 +152,20 @@ public class UserView {
         Search req = res.get();
 
         /* gör sökning i databasen */
-        bookController.searchAsync( // TODO: justera anropet
+        bookController.searchAsync(
                 req.type, req.input, req.first, req.last,
                 books -> {
                     if (books == null || books.isEmpty()) {
-                        new Alert(Alert.AlertType.INFORMATION, "No results found.").showAndWait();
+                        new Alert(Alert.AlertType.INFORMATION, "No books found").showAndWait();
                     } else {
                         showBooksTable(owner, books);
                     }
                 },
-                ex -> showError("Search failed", ex)
+                ex -> showError("Search in database failed", ex)
         );
     }
 
-    // resulterande tabell av search
+    // resulterande tabell av en search
     private void showBooksTable(Stage owner, List<Book> books) {
         Stage stage = new Stage();
         stage.initOwner(owner);
@@ -249,8 +251,8 @@ public class UserView {
         if (button.isEmpty() || button.get() != ButtonType.OK) return;
 
         try {
-            List<Author> authorList = parseAuthors(authors.getText());
-            List<Genre> genreList = parseGenres(genres.getText());
+            List<Author> authorList = createAuthors(authors.getText());
+            List<Genre> genreList = createGenres(genres.getText());
 
             bookController.createBookAsync(title.getText().trim(), authorList, genreList, Integer.parseInt(pages.getText().trim()), isbn.getText().trim(),
                     book -> {
@@ -260,48 +262,54 @@ public class UserView {
                         showError("Insert book failed", ex);
                     }
             );
-        } catch (NumberFormatException nfe) {
-            showError("Invalid input", new Exception("Pages must be a number"));
         } catch (Exception ex) {
             showError("Request failed", ex);
         }
     }
 
-    // skapa författarna utifrån input TODO: justera, alt. fast comboBox lsita med befintliga
-    private List<Author> parseAuthors(String raw) throws DatabaseException {
-        List<Author> out = new ArrayList<>();
-        if (raw == null || raw.trim().isEmpty()) return out;
+    // skapa författarna utifrån input
+    private List<Author> createAuthors(String str) throws DatabaseException {
+        List<Author> authors = new ArrayList<>();
 
-        for (String token : raw.split(",")) {
-            String full = token.trim();
-            if (full.isEmpty()) continue;
-
-            int idx = full.lastIndexOf(' ');
-            if (idx <= 0 || idx == full.length() - 1) {
-                throw new DatabaseException("Author must be 'First Last'. Invalid: " + full);
-            }
-            String first = full.substring(0, idx).trim();
-            String last  = full.substring(idx + 1).trim();
-
-            Author a = new Author();
-            a.setFirstName(first);
-            a.setLastName(last);
-            out.add(a);
+        if (str == null || str.isBlank()) {
+            return authors;
         }
-        return out;
+
+        for (String part : str.split(",")) {
+            String[] names = part.trim().split("\\s+");
+
+            if (names.length != 2) {
+                throw new DatabaseException("wrong format");
+            }
+
+            Author author = new Author();
+            author.setFirstName(names[0]);
+            author.setLastName(names[1]);
+            authors.add(author);
+        }
+
+        return authors;
     }
 
-    // skapa genrerna utifrån input TODO: justera, -||-
-    private List<Genre> parseGenres(String raw) {
-        List<Genre> out = new ArrayList<>();
-        if (raw == null || raw.trim().isEmpty()) return out;
+    // skapa genrerna utifrån input
+    private List<Genre> createGenres(String str) {
+        List<Genre> genres = new ArrayList<>();
 
-        for (String token : raw.split(",")) {
-            String name = token.trim();
-            if (name.isEmpty()) continue;
-            out.add(new Genre(0, name));
+        if (str == null || str.trim().isEmpty()) {
+            return genres;
         }
-        return out;
+
+        String[] gen = str.split(",");
+
+        for (String part : gen) {
+            String name = part.trim();
+
+            Genre g = new Genre();
+            g.setGenre(name);
+            genres.add(g);
+        }
+
+        return genres;
     }
 
 
@@ -354,7 +362,7 @@ public class UserView {
     /* user rating av bok */
     private void openUserRatingDialog(Stage owner) {
         if (!userController.isLoggedIn()) {
-            new Alert(Alert.AlertType.WARNING, "You must be logged in to rate.").showAndWait();
+            new Alert(Alert.AlertType.WARNING, "You must log in to do this rating").showAndWait();
             return;
         }
 
@@ -463,7 +471,7 @@ public class UserView {
         }
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                "Are you sure you want to delete book " + isbn + "?\nThis will delete ratings/reviews/links too.",
+                "do you want to delete book " + isbn + "?\nthis will delete related data too.",
                 ButtonType.YES, ButtonType.NO);
         confirm.initOwner(owner);
 
@@ -538,7 +546,7 @@ public class UserView {
 
 
     /* hjälp-metoder */
-    private void showError(String title, Throwable ex) {
+    private void showError(String title, Exception ex) {
         ex.printStackTrace();
         Platform.runLater(() -> {
             Alert a = new Alert(Alert.AlertType.ERROR);
@@ -562,4 +570,5 @@ public class UserView {
             this.last = last == null ? "" : last;
         }
     }
+
 }

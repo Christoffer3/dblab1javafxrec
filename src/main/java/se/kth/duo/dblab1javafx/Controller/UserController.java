@@ -39,13 +39,13 @@ public class UserController {
     public void loginAsync(String username,
                            String password,
                            Consumer<User> onSuccess,
-                           Consumer<Throwable> onError) {
+                           Consumer<Exception> onError) {
 
         new Thread(() -> {
             try {
                 User user = login(username, password);
                 Platform.runLater(() -> onSuccess.accept(user));
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
         }, "login-thread").start();

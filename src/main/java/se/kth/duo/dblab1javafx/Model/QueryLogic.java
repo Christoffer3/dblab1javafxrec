@@ -13,7 +13,7 @@ public class QueryLogic implements QL_Interface {
         this.con = con;
     }
 
-    /* Searches */
+    /* Sökningar */
     public List<Book> searchBookByTitle(String title) throws DatabaseException {
         String query = "SELECT * FROM T_Book WHERE title LIKE ?";
         PreparedStatement ps = null;
@@ -38,7 +38,7 @@ public class QueryLogic implements QL_Interface {
             }
 
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when searching a book by title", e);
+            throw new DatabaseException("SQL error when searching a book by title", e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -76,7 +76,7 @@ public class QueryLogic implements QL_Interface {
             }
 
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when searching a book by ISBN", e);
+            throw new DatabaseException("SQL eror when searching a book by ISBN", e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -120,7 +120,7 @@ public class QueryLogic implements QL_Interface {
             }
 
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when searching a book by author", e);
+            throw new DatabaseException("SQL error when searching a book by author", e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -136,17 +136,13 @@ public class QueryLogic implements QL_Interface {
     @Override
     public List<Book> searchBookByRating(int rating) throws DatabaseException {
         String query =
-                "SELECT b.ISBN, b.title, b.pages " +
-                        "FROM T_Book b " +
+                "SELECT b.ISBN, b.title, b.pages FROM T_Book b " +
                         "JOIN ( " +
                         "   SELECT book_ISBN, AVG(rating) AS avg_rating " +
-                        "   FROM ( " +
-                        "       SELECT book_ISBN, rating FROM T_Rating " +
-                        "       UNION ALL " +
-                        "       SELECT book_ISBN, rating FROM T_User_Rating " +
-                        "   ) all_ratings " +
-                        "   GROUP BY book_ISBN " +
-                        "   HAVING AVG(rating) >= ? " +
+                        "   FROM (SELECT book_ISBN, rating FROM T_Rating " +
+                        "   UNION ALL " +
+                        "   SELECT book_ISBN, rating FROM T_User_Rating) all_ratings " +
+                        "   GROUP BY book_ISBN HAVING AVG(rating) >= ? " +
                         ") r ON b.ISBN = r.book_ISBN";
 
         PreparedStatement ps = null;
@@ -171,7 +167,7 @@ public class QueryLogic implements QL_Interface {
             }
 
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when searching books by minimum rating", e);
+            throw new DatabaseException("SQL err. when searching books by minimum rating", e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -215,7 +211,7 @@ public class QueryLogic implements QL_Interface {
             }
 
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when searching books by genre", e);
+            throw new DatabaseException("SQL error when searching books by genre", e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -227,6 +223,7 @@ public class QueryLogic implements QL_Interface {
 
         return resultBooks;
     }
+
 
     /* select-frågor */
     @Override
@@ -262,7 +259,7 @@ public class QueryLogic implements QL_Interface {
             }
 
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when fetching authors for book", e);
+            throw new DatabaseException("SQL error when getting authors for books", e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -299,7 +296,7 @@ public class QueryLogic implements QL_Interface {
             }
 
         } catch (SQLException e) {
-            throw new DatabaseException("SQL Error when fetching genres for book", e);
+            throw new DatabaseException("SQL error when try getting genres for the book", e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -312,10 +309,9 @@ public class QueryLogic implements QL_Interface {
         return genresForBook;
     }
 
-    /* Inserts */
+    /* inserts */
     @Override
     public void insertToBooks(Book book) throws DatabaseException {
-        // TODO: ska följande delas upp i separata metoder? tror ej det
         String insertBook = "INSERT INTO T_Book (ISBN, title, pages) VALUES (?, ?, ?)";
         String linkAuthor = "INSERT INTO T_Book_Authors (book_ISBN, author_aID) VALUES (?, ?)";
         String linkGenre  = "INSERT INTO T_Book_Genre (book_ISBN, genre_gID) VALUES (?, ?)";
@@ -334,7 +330,7 @@ public class QueryLogic implements QL_Interface {
             ps.close();
             ps = null;
 
-            for (Author a : book.getAuthors()) { // länka författare
+            for (Author a : book.getAuthors()) { // länkar författare
                 int aId = findAuthorIdByName(a.getFirstName(), a.getLastName());
                 if (aId == -1) {
                     throw new DatabaseException("Unknown author: " + a.getFirstName() + " " + a.getLastName());
@@ -366,11 +362,12 @@ public class QueryLogic implements QL_Interface {
         } catch (Exception e) {
             try {
                 con.rollback();
-            } catch (SQLException ignored) { // TODO: hantera följande slut av metod bättre?
+            } catch (SQLException ignored) {
+                System.err.println("rollback failed");
             }
 
             if (e instanceof DatabaseException) throw (DatabaseException) e;
-            throw new DatabaseException("SQL Error when inserting book with authors/genres", e);
+            throw new DatabaseException("SQL error when add book with its authors and genres", e);
         } finally {
             try {
                 if (ps != null) ps.close();
@@ -381,6 +378,7 @@ public class QueryLogic implements QL_Interface {
             try {
                 con.setAutoCommit(true);
             } catch (SQLException ignored) {
+                System.err.println("turn on auto commit failed");
             }
         }
     }
@@ -401,12 +399,13 @@ public class QueryLogic implements QL_Interface {
 
             con.commit();
 
-        } catch (SQLException e) { // TODO: samma här
+        } catch (SQLException e) {
             try {
                 con.rollback();
             } catch (SQLException ignored) {
+                System.err.println("rollback failed");
             }
-            throw new DatabaseException("Transaction failed", e);
+            throw new DatabaseException("transaction failed", e);
 
         } finally {
             try {
@@ -444,13 +443,13 @@ public class QueryLogic implements QL_Interface {
             try {
                 con.rollback();
             } catch (SQLException ignored) {
+                System.err.println("rollback failed");
             }
 
             if (e instanceof SQLIntegrityConstraintViolationException) {
-                throw new DatabaseException("User have already rated this book.", e);
+                throw new DatabaseException("User have already rated this book", e);
             }
-
-            throw new DatabaseException("Transaction failed: " + e.getMessage(), e);
+            throw new DatabaseException("transaction failed" + e.getMessage(), e);
 
         } finally {
             try {
@@ -488,9 +487,10 @@ public class QueryLogic implements QL_Interface {
             try {
                 con.rollback();
             } catch (SQLException ignored) {
+                System.err.println("rollback failed");
             }
 
-            throw new DatabaseException("Transaction failed: " + e.getMessage(), e);
+            throw new DatabaseException("transaction failed" + e.getMessage(), e);
 
         } finally {
             try {
@@ -531,6 +531,7 @@ public class QueryLogic implements QL_Interface {
             try {
                 con.rollback();
             } catch (SQLException ignored) {
+                System.err.println("rollback failed");
             }
 
             if (e instanceof DatabaseException) throw (DatabaseException) e;
@@ -587,9 +588,11 @@ public class QueryLogic implements QL_Interface {
                 e.printStackTrace();
             }
         }
+
     }
 
-    /* hjälp-metoder */ // TODO: lägg till i interface? och byt namn till t.ex. "check if author is in database"
+
+    /* hjälp-metoder */
     private int findAuthorIdByName(String firstName, String lastName) throws SQLException {
         String sql = "SELECT aID FROM T_Author WHERE firstName = ? AND lastName = ?";
 
@@ -640,4 +643,5 @@ public class QueryLogic implements QL_Interface {
             }
         }
     }
+
 }

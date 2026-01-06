@@ -23,14 +23,14 @@ public class Main extends Application {
             con = jdbc.connectToDB();
 
             QL_Interface queryLogic = new QueryLogic(con);
-            primaryStage.setOnCloseRequest(e -> this.shutdown()); // stänger connection vid avlslut av app.
+            primaryStage.setOnCloseRequest(e -> this.closeConnection()); // stänger connection vid avlslut av app.
 
             controller = new Controller(primaryStage, queryLogic);
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             System.out.println("Connection to database denied, please check that login-input is correct");
-            shutdown();
+            closeConnection();
             Platform.exit();
         }
     }
@@ -39,13 +39,14 @@ public class Main extends Application {
         launch(args);
     }
 
-    public void shutdown() {
-        System.out.println("Shutting down.");
+
+    public void closeConnection() {
+        System.out.println("Try closing connection to database");
 
         try {
             if (con != null && !con.isClosed()) {
                 con.close();
-                System.out.println("Connection successfully closed towards database.");
+                System.out.println("Connection to database closed");
             }
         } catch (SQLException e) {
             System.out.println("Exception thrown whilst trying to close connection: " + e.getMessage());

@@ -9,7 +9,6 @@ public interface QL_Interface {
     List<Book> searchBookByAuthor(String firstName, String lastName) throws DatabaseException;
     List<Book> searchBookByRating(int rating) throws DatabaseException;
     List<Book> searchBookByGenre(String genre) throws DatabaseException;
-
     List<Author> selectAuthorsForBook(String ISBN) throws DatabaseException;
     List<Genre> selectGenresForBook(String ISBN) throws DatabaseException;
 
@@ -22,10 +21,4 @@ public interface QL_Interface {
 
     User login(User user, String password) throws DatabaseException;
 
-    // + deklarera de två hjälpmetoderna
-
-    /* behövs dessa nedan? -- finner ej krav på det i uppgiften men lämpligt? */
-    // List<Genre> getGenresForBook(String isbn) throws DatabaseException;
-    // List<Review> getReviewsForBook(String isbn) throws DatabaseException;
-    // ...
 }
