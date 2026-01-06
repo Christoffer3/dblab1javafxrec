@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-
+/**
+ * Skapar kopplingen till hÃ¥rdkodade-definierade databasen
+ */
 public class JDBC {
 
     private String user;

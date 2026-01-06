@@ -13,7 +13,9 @@ public class QueryLogic implements QL_Interface {
         this.con = con;
     }
 
-    /* Sökningar */
+    /**
+     * Söker i databas efter bok via titel och retunerar lista med objekt som del-matchar title-strängen
+     */
     public List<Book> searchBookByTitle(String title) throws DatabaseException {
         String query = "SELECT * FROM T_Book WHERE title LIKE ?";
         PreparedStatement ps = null;
@@ -51,6 +53,9 @@ public class QueryLogic implements QL_Interface {
         return resultBooks;
     }
 
+    /**
+     * Söker i databas efter bok via ISBN och retunerar lista med bok av exakta isbn
+     */
     @Override
     public List<Book> searchBookByISBN(String ISBN) throws DatabaseException {
         String query = "SELECT * FROM T_Book WHERE ISBN = ?";
@@ -89,6 +94,9 @@ public class QueryLogic implements QL_Interface {
         return resultBooks;
     }
 
+    /**
+     * Söker i databas efter bok med angivna författare och retunerar författarens böcker
+     */
     @Override
     public List<Book> searchBookByAuthor(String firstName, String lastName) throws DatabaseException {
         String query = "SELECT b.* FROM T_Book b " +
@@ -133,6 +141,9 @@ public class QueryLogic implements QL_Interface {
         return resultBooks;
     }
 
+    /**
+     * Söker i databas efter böcker med en average rating på minst det som angivet, och retunerar de böcker
+     */
     @Override
     public List<Book> searchBookByRating(int rating) throws DatabaseException {
         String query =
@@ -180,6 +191,9 @@ public class QueryLogic implements QL_Interface {
         return resultBooks;
     }
 
+    /**
+     * Söker i databas efter böcker med angiven genre, och retunerar de böcker
+     */
     @Override
     public List<Book> searchBookByGenre(String genre) throws DatabaseException {
         String query =
@@ -225,7 +239,9 @@ public class QueryLogic implements QL_Interface {
     }
 
 
-    /* select-frågor */
+    /**
+     *  hämtar boks tillhörande författare
+     */
     @Override
     public List<Author> selectAuthorsForBook(String ISBN) throws DatabaseException {
         String query =
@@ -272,6 +288,9 @@ public class QueryLogic implements QL_Interface {
         return authorsForBook;
     }
 
+    /**
+     *  hämtar boks tillhörande genrer
+     */
     @Override
     public List<Genre> selectGenresForBook(String ISBN) throws DatabaseException {
         String query = "SELECT g.gID, g.genreName " +
@@ -309,7 +328,9 @@ public class QueryLogic implements QL_Interface {
         return genresForBook;
     }
 
-    /* inserts */
+    /**
+     *  lägger till bok i databasen utefter angivna data
+     */
     @Override
     public void insertToBooks(Book book) throws DatabaseException {
         String insertBook = "INSERT INTO T_Book (ISBN, title, pages) VALUES (?, ?, ?)";
@@ -362,7 +383,7 @@ public class QueryLogic implements QL_Interface {
         } catch (Exception e) {
             try {
                 con.rollback();
-            } catch (SQLException ignored) {
+            } catch (SQLException ex) {
                 System.err.println("rollback failed");
             }
 
@@ -371,18 +392,21 @@ public class QueryLogic implements QL_Interface {
         } finally {
             try {
                 if (ps != null) ps.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
+            } catch (SQLException ex) {
+                System.err.println("close prepared statement failed");
             }
 
             try {
                 con.setAutoCommit(true);
-            } catch (SQLException ignored) {
+            } catch (SQLException ex) {
                 System.err.println("turn on auto commit failed");
             }
         }
     }
 
+    /**
+     *  lägger till en boks rating
+     */
     @Override
     public void insertToRatings(String ISBN, int rating) throws DatabaseException {
         String sql = "INSERT INTO T_Rating (book_ISBN, rating) VALUES (?, ?)";
@@ -390,38 +414,25 @@ public class QueryLogic implements QL_Interface {
         PreparedStatement ps = null;
 
         try {
-            con.setAutoCommit(false);
-
             ps = con.prepareStatement(sql);
             ps.setString(1, ISBN);
             ps.setInt(2, rating);
             ps.executeUpdate();
 
-            con.commit();
-
         } catch (SQLException e) {
-            try {
-                con.rollback();
-            } catch (SQLException ignored) {
-                System.err.println("rollback failed");
-            }
-            throw new DatabaseException("transaction failed", e);
-
+            throw new DatabaseException("failed insert rating", e);
         } finally {
             try {
                 if (ps != null) ps.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                con.setAutoCommit(true);
-            } catch (SQLException e) {
-                e.printStackTrace();
+            } catch (SQLException ex) {
+                System.err.println("close prepared statement failed");
             }
         }
     }
 
+    /**
+     *  lägger till en boks user-rating
+     */
     @Override
     public void insertToUserRatings(String ISBN, String username, int userRating) throws DatabaseException {
         String sql = "INSERT INTO T_User_Rating (book_ISBN, username, rating) VALUES (?, ?, ?)";
@@ -429,43 +440,31 @@ public class QueryLogic implements QL_Interface {
         PreparedStatement ps = null;
 
         try {
-            con.setAutoCommit(false);
-
             ps = con.prepareStatement(sql);
             ps.setString(1, ISBN);
             ps.setString(2, username);
             ps.setInt(3, userRating);
             ps.executeUpdate();
 
-            con.commit();
-
         } catch (SQLException e) {
-            try {
-                con.rollback();
-            } catch (SQLException ignored) {
-                System.err.println("rollback failed");
-            }
 
             if (e instanceof SQLIntegrityConstraintViolationException) {
                 throw new DatabaseException("User have already rated this book", e);
             }
-            throw new DatabaseException("transaction failed" + e.getMessage(), e);
-
+            throw new DatabaseException("failed insert user rating", e);
         } finally {
             try {
                 if (ps != null) ps.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
+            } catch (SQLException ex) {
+                System.err.println("close prepared statement failed");
             }
 
-            try {
-                con.setAutoCommit(true);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
+    /**
+     *  lägger till en boks reviews (av user)
+     */
     @Override
     public void insertToReviews(Review review) throws DatabaseException {
         String sql = "INSERT INTO T_Review (book_ISBN, username, reviewText) VALUES (?, ?, ?)";
@@ -473,41 +472,27 @@ public class QueryLogic implements QL_Interface {
         PreparedStatement ps = null;
 
         try {
-            con.setAutoCommit(false);
-
             ps = con.prepareStatement(sql);
             ps.setString(1, review.getBook().getISBN());
             ps.setString(2, review.getUser().getUsername());
             ps.setString(3, review.getReviewText());
             ps.executeUpdate();
 
-            con.commit();
-
         } catch (SQLException e) {
-            try {
-                con.rollback();
-            } catch (SQLException ignored) {
-                System.err.println("rollback failed");
-            }
-
-            throw new DatabaseException("transaction failed" + e.getMessage(), e);
-
+            throw new DatabaseException("failed insert review", e);
         } finally {
             try {
                 if (ps != null) ps.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
+            } catch (SQLException ex) {
+                System.err.println("close prepared statement failed");
             }
 
-            try {
-                con.setAutoCommit(true);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
-    /* Deletes */
+    /**
+     *  raderar bok ur databas
+     */
     @Override
     public void deleteBookByISBN(String ISBN) throws DatabaseException {
         String sql = "DELETE FROM T_Book WHERE ISBN = ?";
@@ -515,8 +500,6 @@ public class QueryLogic implements QL_Interface {
         PreparedStatement ps = null;
 
         try {
-            con.setAutoCommit(false);
-
             ps = con.prepareStatement(sql);
             ps.setString(1, ISBN);
 
@@ -525,34 +508,20 @@ public class QueryLogic implements QL_Interface {
                 throw new DatabaseException("No book found with ISBN: " + ISBN);
             }
 
-            con.commit();
-
-        } catch (Exception e) {
-            try {
-                con.rollback();
-            } catch (SQLException ignored) {
-                System.err.println("rollback failed");
-            }
-
-            if (e instanceof DatabaseException) throw (DatabaseException) e;
-            throw new DatabaseException("Transaction failed: " + e.getMessage(), e);
-
+        } catch (SQLException e) {
+            throw new DatabaseException("failed delete book", e);
         } finally {
             try {
                 if (ps != null) ps.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                con.setAutoCommit(true);
-            } catch (SQLException e) {
-                e.printStackTrace();
+            } catch (SQLException ex) {
+                System.err.println("close prepared statement failed");
             }
         }
     }
 
-    /* inloggning mot databas användare */
+    /**
+     *  Loggar in mot databasens användare
+     */
     @Override
     public User login(User user, String password) throws DatabaseException {
         String sql = "SELECT username, password, accountCreationDate FROM T_User WHERE username = ?";

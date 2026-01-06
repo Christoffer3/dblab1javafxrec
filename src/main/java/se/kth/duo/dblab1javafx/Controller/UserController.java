@@ -48,7 +48,7 @@ public class UserController {
             } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "login-thread").start();
+        }, "loginT").start();
 
     }
 

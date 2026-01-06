@@ -9,8 +9,15 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import se.kth.duo.dblab1javafx.Controller.*;
-import se.kth.duo.dblab1javafx.Model.*;
+import se.kth.duo.dblab1javafx.Controller.BookController;
+import se.kth.duo.dblab1javafx.Controller.AuthorController;
+import se.kth.duo.dblab1javafx.Controller.ReviewController;
+import se.kth.duo.dblab1javafx.Controller.UserController;
+import se.kth.duo.dblab1javafx.Model.Book;
+import se.kth.duo.dblab1javafx.Model.Author;
+import se.kth.duo.dblab1javafx.Model.Genre;
+import se.kth.duo.dblab1javafx.Model.User;
+import se.kth.duo.dblab1javafx.Model.DatabaseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -85,7 +92,7 @@ public class UserView {
             new Alert(Alert.AlertType.INFORMATION, "Logged out").showAndWait();
         });
 
-        stage.setScene(new Scene(grid, 300, 150));
+        stage.setScene(new Scene(grid, 330, 150));
         stage.show();
     }
 

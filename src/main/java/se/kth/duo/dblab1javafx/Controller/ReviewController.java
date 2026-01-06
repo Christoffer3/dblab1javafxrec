@@ -28,7 +28,7 @@ public class ReviewController {
             } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "review-thread").start();
+        }, "reviewT").start();
     }
 
 }

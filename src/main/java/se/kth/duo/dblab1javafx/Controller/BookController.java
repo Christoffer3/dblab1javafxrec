@@ -29,7 +29,7 @@ public class BookController {
             } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "book-thread").start();
+        }, "bookT").start();
     }
 
     public List<Book> searchBookByTitle(String title) throws DatabaseException {
@@ -72,7 +72,7 @@ public class BookController {
             } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "db-remove-thread").start();
+        }, "removeT").start();
     }
 
     public void rateBookAnonymousAsync(String isbn, int rating, Runnable onSuccess, Consumer<Exception> onError) {
@@ -83,7 +83,7 @@ public class BookController {
             } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "db-rate-anon-thread").start();
+        }, "rateT").start();
     }
 
     public void userRateBookAsync(String isbn, String username, int rating, Runnable onSuccess, Consumer<Exception> onError) {
@@ -94,7 +94,7 @@ public class BookController {
             } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "db-rate-user-thread").start();
+        }, "userRateT").start();
     }
 
     public void searchAsync(String type, String input, String first, String last, Consumer<List<Book>> onSuccess, Consumer<Exception> onError) {
@@ -114,7 +114,7 @@ public class BookController {
             } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "search-thread").start();
+        }, "searchT").start();
 
     }
 
