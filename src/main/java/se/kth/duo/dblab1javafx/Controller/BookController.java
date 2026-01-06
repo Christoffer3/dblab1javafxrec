@@ -67,7 +67,7 @@ public class BookController {
     public void removeBookAsync(String isbn, Runnable onSuccess, Consumer<Exception> onError) {
         new Thread(() -> {
             try {
-                queryLogic.deleteBookByISBN(isbn);
+                removeBook(isbn);
                 Platform.runLater(onSuccess);
             } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
@@ -78,7 +78,7 @@ public class BookController {
     public void rateBookAnonymousAsync(String isbn, int rating, Runnable onSuccess, Consumer<Exception> onError) {
         new Thread(() -> {
             try {
-                queryLogic.insertToRatings(isbn, rating);
+                rateBookAnonymous(isbn, rating);
                 Platform.runLater(onSuccess);
             } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
@@ -89,7 +89,7 @@ public class BookController {
     public void userRateBookAsync(String isbn, String username, int rating, Runnable onSuccess, Consumer<Exception> onError) {
         new Thread(() -> {
             try {
-                queryLogic.insertToUserRatings(isbn, username, rating);
+                userRateBook(isbn, username, rating);
                 Platform.runLater(onSuccess);
             } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
@@ -97,12 +97,7 @@ public class BookController {
         }, "db-rate-user-thread").start();
     }
 
-    public void searchAsync(String type,
-                            String input,
-                            String first,
-                            String last,
-                            Consumer<List<Book>> onSuccess,
-                            Consumer<Exception> onError) {
+    public void searchAsync(String type, String input, String first, String last, Consumer<List<Book>> onSuccess, Consumer<Exception> onError) {
 
         new Thread(() -> {
             try {

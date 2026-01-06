@@ -24,7 +24,6 @@ public class Main extends Application {
 
             QL_Interface queryLogic = new QueryLogic(con);
             primaryStage.setOnCloseRequest(e -> this.closeConnection()); // stänger connection vid avlslut av app.
-
             controller = new Controller(primaryStage, queryLogic);
 
         } catch (SQLException e) {
