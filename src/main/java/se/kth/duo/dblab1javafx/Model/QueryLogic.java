@@ -16,7 +16,7 @@ public class QueryLogic implements QL_Interface {
     /**
      * Söker i databas efter bok via titel och retunerar lista med objekt som del-matchar title-strängen
      */
-    public List<Book> searchBookByTitle(String title) throws DatabaseException {
+    public List<Book> searchBookByTitle(String title) throws SearchException {
         String query = "SELECT * FROM T_Book WHERE title LIKE ?";
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -39,8 +39,8 @@ public class QueryLogic implements QL_Interface {
                 resultBooks.add(book);
             }
 
-        } catch (SQLException e) {
-            throw new DatabaseException("SQL error when searching a book by title", e);
+        } catch (SQLException | DatabaseException e) {
+            throw new SearchException("SQL error when searching a book by title", "Title", title, e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -57,7 +57,7 @@ public class QueryLogic implements QL_Interface {
      * Söker i databas efter bok via ISBN och retunerar lista med bok av exakta isbn
      */
     @Override
-    public List<Book> searchBookByISBN(String ISBN) throws DatabaseException {
+    public List<Book> searchBookByISBN(String ISBN) throws SearchException {
         String query = "SELECT * FROM T_Book WHERE ISBN = ?";
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -80,8 +80,8 @@ public class QueryLogic implements QL_Interface {
                 resultBooks.add(book);
             }
 
-        } catch (SQLException e) {
-            throw new DatabaseException("SQL eror when searching a book by ISBN", e);
+        } catch (SQLException | DatabaseException e) {
+            throw new SearchException("SQL error when searching a book by ISBN", "ISBN", ISBN, e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -98,7 +98,7 @@ public class QueryLogic implements QL_Interface {
      * Söker i databas efter bok med angivna författare och retunerar författarens böcker
      */
     @Override
-    public List<Book> searchBookByAuthor(String firstName, String lastName) throws DatabaseException {
+    public List<Book> searchBookByAuthor(String firstName, String lastName) throws SearchException {
         String query = "SELECT b.* FROM T_Book b " +
                 "JOIN T_Book_Authors ba ON b.ISBN = ba.book_ISBN " +
                 "JOIN T_Author a ON ba.author_aID = a.aID " +
@@ -107,6 +107,7 @@ public class QueryLogic implements QL_Interface {
         PreparedStatement ps = null;
         ResultSet rs = null;
         List<Book> resultBooks = new ArrayList<>();
+        String fullName = firstName + " " + lastName;
 
         try {
             ps = con.prepareStatement(query);
@@ -127,8 +128,8 @@ public class QueryLogic implements QL_Interface {
                 resultBooks.add(book);
             }
 
-        } catch (SQLException e) {
-            throw new DatabaseException("SQL error when searching a book by author", e);
+        } catch (SQLException | DatabaseException e) {
+            throw new SearchException("SQL error when searching a book by author", "Author", fullName, e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -145,7 +146,7 @@ public class QueryLogic implements QL_Interface {
      * Söker i databas efter böcker med en average rating på minst det som angivet, och retunerar de böcker
      */
     @Override
-    public List<Book> searchBookByRating(int rating) throws DatabaseException {
+    public List<Book> searchBookByRating(int rating) throws SearchException {
         String query =
                 "SELECT b.ISBN, b.title, b.pages FROM T_Book b " +
                         "JOIN ( " +
@@ -177,8 +178,8 @@ public class QueryLogic implements QL_Interface {
                 resultBooks.add(book);
             }
 
-        } catch (SQLException e) {
-            throw new DatabaseException("SQL err. when searching books by minimum rating", e);
+        } catch (SQLException | DatabaseException e) {
+            throw new SearchException("SQL err. when searching books by minimum rating", "Rating", String.valueOf(rating), e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -195,7 +196,7 @@ public class QueryLogic implements QL_Interface {
      * Söker i databas efter böcker med angiven genre, och retunerar de böcker
      */
     @Override
-    public List<Book> searchBookByGenre(String genre) throws DatabaseException {
+    public List<Book> searchBookByGenre(String genre) throws SearchException {
         String query =
                 "SELECT DISTINCT b.ISBN, b.title, b.pages " +
                         "FROM T_Book b " +
@@ -224,8 +225,8 @@ public class QueryLogic implements QL_Interface {
                 resultBooks.add(book);
             }
 
-        } catch (SQLException e) {
-            throw new DatabaseException("SQL error when searching books by genre", e);
+        } catch (SQLException | DatabaseException e) {
+            throw new SearchException("SQL error when searching books by genre", "Genre", genre, e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -240,9 +241,8 @@ public class QueryLogic implements QL_Interface {
 
 
     /**
-     *  hämtar boks tillhörande författare
+     * hämtar boks tillhörande författare
      */
-    @Override
     public List<Author> selectAuthorsForBook(String ISBN) throws DatabaseException {
         String query =
                 "SELECT a.aID, a.firstName, a.lastName, a.birthDate, a.deathDate " +
@@ -289,9 +289,8 @@ public class QueryLogic implements QL_Interface {
     }
 
     /**
-     *  hämtar boks tillhörande genrer
+     * hämtar boks tillhörande genrer
      */
-    @Override
     public List<Genre> selectGenresForBook(String ISBN) throws DatabaseException {
         String query = "SELECT g.gID, g.genreName " +
                 "FROM T_Genre g " +
@@ -329,10 +328,10 @@ public class QueryLogic implements QL_Interface {
     }
 
     /**
-     *  lägger till bok i databasen utefter angivna data
+     * lägger till bok i databasen utefter angivna data
      */
     @Override
-    public void insertToBooks(Book book) throws DatabaseException {
+    public void insertToBooks(Book book) throws InsertException {
         String insertBook = "INSERT INTO T_Book (ISBN, title, pages) VALUES (?, ?, ?)";
         String linkAuthor = "INSERT INTO T_Book_Authors (book_ISBN, author_aID) VALUES (?, ?)";
         String linkGenre  = "INSERT INTO T_Book_Genre (book_ISBN, genre_gID) VALUES (?, ?)";
@@ -354,7 +353,7 @@ public class QueryLogic implements QL_Interface {
             for (Author a : book.getAuthors()) { // länkar författare
                 int aId = findAuthorIdByName(a.getFirstName(), a.getLastName());
                 if (aId == -1) {
-                    throw new DatabaseException("Unknown author: " + a.getFirstName() + " " + a.getLastName());
+                    throw new InsertException("Author not found", "Book", book.getISBN(), a.getFirstName() + " " + a.getLastName());
                 }
 
                 ps = con.prepareStatement(linkAuthor);
@@ -368,7 +367,7 @@ public class QueryLogic implements QL_Interface {
             for (Genre g : book.getGenres()) { // länka genrer
                 int gId = findGenreIdByName(g.getGenre());
                 if (gId == -1) {
-                    throw new DatabaseException("Unknown genre: " + g.getGenre());
+                    throw new InsertException("Genre not found", "Book", book.getISBN(), g.getGenre());
                 }
 
                 ps = con.prepareStatement(linkGenre);
@@ -387,8 +386,8 @@ public class QueryLogic implements QL_Interface {
                 System.err.println("rollback failed");
             }
 
-            if (e instanceof DatabaseException) throw (DatabaseException) e;
-            throw new DatabaseException("SQL error when add book with its authors and genres", e);
+            if (e instanceof InsertException) throw (InsertException) e;
+            throw new InsertException("SQL error when add book with its authors and genres", "Book", book.getISBN(), e);
         } finally {
             try {
                 if (ps != null) ps.close();
@@ -405,10 +404,10 @@ public class QueryLogic implements QL_Interface {
     }
 
     /**
-     *  lägger till en boks rating
+     * lägger till en boks rating
      */
     @Override
-    public void insertToRatings(String ISBN, int rating) throws DatabaseException {
+    public void insertToRatings(String ISBN, int rating) throws InsertException {
         String sql = "INSERT INTO T_Rating (book_ISBN, rating) VALUES (?, ?)";
 
         PreparedStatement ps = null;
@@ -420,7 +419,7 @@ public class QueryLogic implements QL_Interface {
             ps.executeUpdate();
 
         } catch (SQLException e) {
-            throw new DatabaseException("failed insert rating", e);
+            throw new InsertException("failed insert rating", "Rating", ISBN, e);
         } finally {
             try {
                 if (ps != null) ps.close();
@@ -431,10 +430,10 @@ public class QueryLogic implements QL_Interface {
     }
 
     /**
-     *  lägger till en boks user-rating
+     * lägger till en boks user-rating
      */
     @Override
-    public void insertToUserRatings(String ISBN, String username, int userRating) throws DatabaseException {
+    public void insertToUserRatings(String ISBN, String username, int userRating) throws InsertException {
         String sql = "INSERT INTO T_User_Rating (book_ISBN, username, rating) VALUES (?, ?, ?)";
 
         PreparedStatement ps = null;
@@ -449,9 +448,9 @@ public class QueryLogic implements QL_Interface {
         } catch (SQLException e) {
 
             if (e instanceof SQLIntegrityConstraintViolationException) {
-                throw new DatabaseException("User have already rated this book", e);
+                throw new InsertException("User have already rated this book", "UserRating", ISBN, e);
             }
-            throw new DatabaseException("failed insert user rating", e);
+            throw new InsertException("failed insert user rating", "UserRating", ISBN, e);
         } finally {
             try {
                 if (ps != null) ps.close();
@@ -463,23 +462,23 @@ public class QueryLogic implements QL_Interface {
     }
 
     /**
-     *  lägger till en boks reviews (av user)
+     * lägger till en boks reviews (av user)
      */
     @Override
-    public void insertToReviews(Review review) throws DatabaseException {
+    public void insertToReviews(Review review) throws InsertException {
         String sql = "INSERT INTO T_Review (book_ISBN, username, reviewText) VALUES (?, ?, ?)";
-
+        String isbn = review.getBook().getISBN();
         PreparedStatement ps = null;
 
         try {
             ps = con.prepareStatement(sql);
-            ps.setString(1, review.getBook().getISBN());
+            ps.setString(1, isbn);
             ps.setString(2, review.getUser().getUsername());
             ps.setString(3, review.getReviewText());
             ps.executeUpdate();
 
         } catch (SQLException e) {
-            throw new DatabaseException("failed insert review", e);
+            throw new InsertException("failed insert review", "Review", isbn, e);
         } finally {
             try {
                 if (ps != null) ps.close();
@@ -491,10 +490,10 @@ public class QueryLogic implements QL_Interface {
     }
 
     /**
-     *  raderar bok ur databas
+     * raderar bok ur databas
      */
     @Override
-    public void deleteBookByISBN(String ISBN) throws DatabaseException {
+    public void deleteBookByISBN(String ISBN) throws DeleteException {
         String sql = "DELETE FROM T_Book WHERE ISBN = ?";
 
         PreparedStatement ps = null;
@@ -505,11 +504,12 @@ public class QueryLogic implements QL_Interface {
 
             int rows = ps.executeUpdate();
             if (rows == 0) {
-                throw new DatabaseException("No book found with ISBN: " + ISBN);
+                throw new DeleteException("No book found with ISBN: " + ISBN, ISBN);
             }
 
-        } catch (SQLException e) {
-            throw new DatabaseException("failed delete book", e);
+        } catch (SQLException | DeleteException e) {
+            if (e instanceof DeleteException) throw (DeleteException) e;
+            throw new DeleteException("failed delete book", ISBN, e);
         } finally {
             try {
                 if (ps != null) ps.close();
@@ -520,7 +520,7 @@ public class QueryLogic implements QL_Interface {
     }
 
     /**
-     *  Loggar in mot databasens användare
+     * Loggar in mot databasens användare
      */
     @Override
     public User login(User user, String password) throws DatabaseException {

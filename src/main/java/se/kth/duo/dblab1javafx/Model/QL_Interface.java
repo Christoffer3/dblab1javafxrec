@@ -9,9 +9,6 @@ public interface QL_Interface {
     List<Book> searchBookByAuthor(String firstName, String lastName) throws DatabaseException;
     List<Book> searchBookByRating(int rating) throws DatabaseException;
     List<Book> searchBookByGenre(String genre) throws DatabaseException;
-    List<Author> selectAuthorsForBook(String ISBN) throws DatabaseException;
-    List<Genre> selectGenresForBook(String ISBN) throws DatabaseException;
-
     void insertToBooks(Book book) throws DatabaseException;
     void insertToRatings(String ISBN, int rating) throws DatabaseException;
     void insertToUserRatings(String ISBN, String username, int userRating) throws DatabaseException;
